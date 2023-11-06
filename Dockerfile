@@ -22,4 +22,4 @@ RUN rm -r src
 # Assign `yarn start:prod` as the default command to run when booting the container
 CMD ["yarn", "start:prod"]
 
-EXPOSE 8079
+EXPOSE 8079/tcp
