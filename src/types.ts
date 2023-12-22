@@ -1,3 +1,5 @@
+import type { Request } from 'express';
+
 export enum GLAMBOX_SERVICES {
   ECOMMERCE = 'ecommerce',
   FINTECH = 'fintech',
@@ -111,3 +113,11 @@ export type CreateUser = Pick<
 >;
 
 export type SigninUser = Pick<User, 'email' | 'password'>;
+
+export type GoogleAuthRequest = Request & {
+  user?: {
+    email: string;
+    name: string;
+    accessToken: string;
+  };
+};

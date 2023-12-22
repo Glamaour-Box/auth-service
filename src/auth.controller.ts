@@ -1,9 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreateUser, SigninUser } from './types';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+  HttpCode,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
-@Controller()
+import { AuthService } from './auth.service';
+import { CreateUser, GoogleAuthRequest, SigninUser } from './types';
+
+@Controller('auth')
+// @UseInterceptors(CacheInterceptor)
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -12,18 +22,29 @@ export class AuthController {
     return 'Hello World!';
   }
 
-  @MessagePattern({ cmd: 'SIGNUP' })
-  async signup(input: CreateUser) {
+  @Post('/signup')
+  async signup(@Body() input: CreateUser) {
     return await this.authService.signup(input);
   }
 
-  @MessagePattern({ cmd: 'SIGNIN' })
-  async signin(@Payload() input?: SigninUser) {
+  @Post('/signin')
+  @HttpCode(200)
+  async signin(@Body() input?: SigninUser) {
     return await this.authService.signin(input);
   }
 
-  @MessagePattern({ cmd: 'VERIFY_JWT' })
-  async verifyJWT(@Payload() input?: { token: string }) {
+  @Post('/verify-token')
+  async verifyJWT(@Body() input?: { token: string }) {
     return await this.authService.verifyJwt(input.token);
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleAuth(@Req() req: GoogleAuthRequest) {}
+
+  @Get('/google/redirect')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: GoogleAuthRequest) {
+    return await this.authService.googleLogin(req);
   }
 }

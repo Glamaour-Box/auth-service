@@ -1,7 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  InternalServerErrorException,
+  HttpException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
-import { HttpStatus, ServiceResponse, CreateUser, SigninUser } from 'src/types';
+import {
+  HttpStatus,
+  ServiceResponse,
+  CreateUser,
+  SigninUser,
+  GoogleAuthRequest,
+} from 'src/types';
 
 import { PrismaService } from 'src/utils/prisma.service';
 import {
@@ -12,7 +25,6 @@ import { z } from 'zod';
 import { transformZodErrors } from './utils/transformZodErrors';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import { Payload } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthService {
@@ -25,21 +37,19 @@ export class AuthService {
     return bcrypt.hash(password, 15);
   }
 
-  async signup(
-    data: CreateUser,
-  ): Promise<ServiceResponse<Omit<User, 'password'>>> {
-    try {
-      const { email, password, ...rest } = signupSchema.parse(data);
+  async signup(data: CreateUser): Promise<Omit<User, 'password'>> {
+    const { email, password, ..._ } = signupSchema.parse(data);
 
+    try {
       const foundUser = await this.prisma.user.findUnique({ where: { email } });
 
       if (foundUser)
-        return {
-          message: 'email has already been registered',
-          status: HttpStatus.CONFLICT,
-          data: null,
-        };
+        throw new ConflictException('email has already been registered');
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
+    }
 
+    try {
       // encrypt password
       const encryptedPassword = await this.hashPassword(password);
 
@@ -49,25 +59,17 @@ export class AuthService {
 
       delete createdUser.password;
 
-      return {
-        data: createdUser,
-        message: 'user signed up successfully',
-        status: HttpStatus.CREATED,
-      };
+      // send OTP to phone or email
+
+      // create a store if user.user_role = vendor
+      //
+
+      return createdUser;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return {
-          data: null,
-          status: HttpStatus.BAD_REQUEST,
-          message: transformZodErrors(error.errors),
-        };
+        throw new BadRequestException(transformZodErrors(error.errors));
       } else {
-        console.error(error);
-        return {
-          data: null,
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'an error occured',
-        };
+        throw new HttpException(error.message, error.status);
       }
     }
   }
@@ -94,67 +96,90 @@ export class AuthService {
     return foundUser;
   }
 
-  async signin(data: SigninUser): Promise<ServiceResponse<{ token: string }>> {
+  async signin(
+    data: SigninUser,
+  ): Promise<{ token: string } & Omit<User, 'password'>> {
     try {
       const { email, password } = signinSchema.parse(data);
 
-      const user = await this.validatedUser(email, password);
+      const { password: _, ...user } = await this.validatedUser(
+        email,
+        password,
+      );
 
-      if (!user)
-        return {
-          message: 'unauthorized',
-          status: HttpStatus.UNAUTHORIZED,
-          data: null,
-        };
+      if (!user) throw new UnauthorizedException();
 
-      const jwt = await this.jwtService.signAsync({ id: user.id });
+      const jwt = await this.jwtService.signAsync({
+        id: user.id,
+        role: user.role,
+      });
 
       return {
-        data: { token: jwt },
-        message: 'Signed in successfully',
-        status: HttpStatus.OK,
+        ...user,
+        token: jwt,
       };
     } catch (error) {
       console.error('Signin Error => ', error);
 
       if (error instanceof z.ZodError) {
-        return {
-          data: null,
-          status: HttpStatus.BAD_REQUEST,
-          message: transformZodErrors(error.errors),
-        };
+        throw new BadRequestException(transformZodErrors(error));
       } else {
-        return {
-          data: null,
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'an error occured',
-        };
+        throw new HttpException(error.message, error.status);
       }
     }
   }
 
-  async verifyJwt(token: string): Promise<ServiceResponse> {
-    if (!token)
-      return {
-        status: HttpStatus.UNAUTHORIZED,
-        data: null,
-        message: 'unauthorized',
-      };
+  async verifyJwt(
+    token: string,
+  ): Promise<{ exp: any; id: string; role: string }> {
+    if (!token) throw new UnauthorizedException();
 
     try {
-      const { exp } = await this.jwtService.verifyAsync(token);
-
-      console.log('verifyJwt exp => ', exp);
-
-      return { data: { exp }, status: HttpStatus.OK, message: '' };
+      const { exp, id, role } = await this.jwtService.verifyAsync(token);
+      return { exp, id, role };
     } catch (error) {
-      console.log('verifyJwt ERROR => ', error);
+      throw new UnauthorizedException();
+    }
+  }
+
+  async sendOtp(email: string) {}
+
+  async verifyOtp(otp: string) {}
+
+  async googleLogin(
+    req: GoogleAuthRequest,
+  ): Promise<User & { token?: string }> {
+    if (!req.user) throw new UnauthorizedException('no user from google');
+
+    try {
+      // search for user and create if not found
+      const foundUser = await this.prisma.user.findUnique({
+        where: { email: req.user.email },
+      });
+
+      if (!foundUser) {
+        const createdUser = await this.prisma.user.create({
+          data: {
+            email: req.user.email,
+            name: req.user.name,
+            role: 'vendor',
+            o_auth: true,
+          },
+        });
+
+        delete createdUser.password;
+
+        return createdUser;
+      }
+
+      const jwt = await this.jwtService.signAsync({ id: foundUser.id });
 
       return {
-        status: HttpStatus.UNAUTHORIZED,
-        data: null,
-        message: error.message,
+        ...foundUser,
+        token: jwt,
       };
+    } catch (error) {
+      throw new HttpException(error.message, error.status);
     }
   }
 }

@@ -1,6 +1,6 @@
 # Start with a Node.js base image that uses Node v13
 FROM node:20
-WORKDIR /usr/src/app
+WORKDIR /usr/src
 
 # Copy the package.json file to the container and install fresh node_modules
 COPY package*.json tsconfig*.json ./
@@ -22,4 +22,4 @@ RUN rm -r src
 # Assign `yarn start:prod` as the default command to run when booting the container
 CMD ["yarn", "start:prod"]
 
-EXPOSE 8079/tcp
+EXPOSE 8079

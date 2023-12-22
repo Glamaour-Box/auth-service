@@ -1,17 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtService, JwtModule } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
+import { CacheModule } from '@nestjs/cache-manager';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PrismaService } from './utils/prisma.service';
 import { JWTStrategy } from './jwt-strategy';
+import { EmailService } from './email/email.service';
+import { GoogleStrategy } from './google-strategy';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    // CacheModule.register({ isGlobal: true }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -22,6 +26,12 @@ import { JWTStrategy } from './jwt-strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, PrismaService, JWTStrategy],
+  providers: [
+    AuthService,
+    PrismaService,
+    JWTStrategy,
+    GoogleStrategy,
+    EmailService,
+  ],
 })
 export class AuthServiceModule {}

@@ -14,14 +14,14 @@ model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   email         String    @unique
   name          String
-  password      String
-  phone         String
+  password      String? // should be null if o_auth is true, can be added later
+  phone         String? // should be null if o_auth is true, can be added later
   role          user_role @default(user)
   emailVerified Boolean   @default(false)
-  service       service
-
+  service       service?
+  o_auth        Boolean   @default(false)
   //for vendors
-  store String? // will be the store ID to the store in the ecommerce service DB
+  store         String? // will be the store ID to the store in the ecommerce service DB
 }
 
 enum user_role {
