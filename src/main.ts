@@ -5,8 +5,8 @@ import { NestFactory } from '@nestjs/core';
 import { AuthServiceModule } from 'src/auth.module';
 
 async function bootstrap() {
-  const port = process.env.PORT ? Number(process.env.PORT) : 8079;
-  const host = process.env.HOST ? Number(process.env.HOST) : 'localhost';
+  const port = process.env.PORT || 8079;
+  const host = process.env.HOST || 'localhost';
 
   const app = await NestFactory.create(AuthServiceModule);
   app.use(compression());

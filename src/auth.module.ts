@@ -7,15 +7,17 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PrismaService } from './utils/prisma.service';
 import { JWTStrategy } from './jwt-strategy';
-import { EmailService } from './email/email.service';
 import { GoogleStrategy } from './google-strategy';
+import { MailModule } from './mail/mail.module';
+import { OtpService } from './otp/otp.service';
+import { OtpController } from './otp/otp.controller';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    // CacheModule.register({ isGlobal: true }),
+    CacheModule.register({ isGlobal: true }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -24,14 +26,9 @@ import { GoogleStrategy } from './google-strategy';
       }),
       inject: [ConfigService],
     }),
+    MailModule,
   ],
-  controllers: [AuthController],
-  providers: [
-    AuthService,
-    PrismaService,
-    JWTStrategy,
-    GoogleStrategy,
-    EmailService,
-  ],
+  controllers: [AuthController, OtpController],
+  providers: [AuthService, PrismaService, JWTStrategy, GoogleStrategy, OtpService],
 })
 export class AuthServiceModule {}

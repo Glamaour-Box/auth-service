@@ -34,6 +34,7 @@ export class AuthController {
   }
 
   @Post('/verify-token')
+  @HttpCode(200)
   async verifyJWT(@Body() input?: { token: string }) {
     return await this.authService.verifyJwt(input.token);
   }

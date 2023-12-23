@@ -2,19 +2,13 @@ import {
   Injectable,
   ConflictException,
   BadRequestException,
-  InternalServerErrorException,
   HttpException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
-import {
-  HttpStatus,
-  ServiceResponse,
-  CreateUser,
-  SigninUser,
-  GoogleAuthRequest,
-} from 'src/types';
+import { CreateUser, SigninUser, GoogleAuthRequest } from 'src/types';
 
 import { PrismaService } from 'src/utils/prisma.service';
 import {
@@ -25,12 +19,16 @@ import { z } from 'zod';
 import { transformZodErrors } from './utils/transformZodErrors';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
+import { MailService } from './mail/mail.service';
+import { OtpService } from './otp/otp.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
+    private otpService: OtpService,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -60,9 +58,9 @@ export class AuthService {
       delete createdUser.password;
 
       // send OTP to phone or email
-
-      // create a store if user.user_role = vendor
-      //
+      this.otpService.sendOtp(createdUser.email);
+      // make actions based on user role = vendor, user, etc
+      // create a store if user role = vendor
 
       return createdUser;
     } catch (error) {
@@ -141,10 +139,6 @@ export class AuthService {
       throw new UnauthorizedException();
     }
   }
-
-  async sendOtp(email: string) {}
-
-  async verifyOtp(otp: string) {}
 
   async googleLogin(
     req: GoogleAuthRequest,
