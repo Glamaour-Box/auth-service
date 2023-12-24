@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  email          String    @unique
+  name           String
+  password       String? // should be null if o_auth is true, can be added later
+  phone          String? // should be null if o_auth is true, can be added later
+  role           user_role @default(user)
+  email_verified Boolean   @default(false)
+  service        service?
+  o_auth         Boolean   @default(false)
+  //for vendors
+  store          String? // will be the store ID to the store in the ecommerce service DB
+}
+
+enum user_role {
+  vendor @map("vendor")
+  user   @map("user")
+  admin  @map("admin")
+}
+
+enum service {
+  vendor_dashboard @map("vendor_dashboard")
+  ecommerce        @map("ecommerce")
+  fintech          @map("fintech")
+  logistics        @map("logistics")
+}
