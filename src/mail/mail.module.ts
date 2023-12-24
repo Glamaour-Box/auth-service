@@ -19,7 +19,7 @@ import { join } from 'path';
         port: Number(process.env.SMTP_PORT),
       },
       defaults: {
-      from: `"No Reply" <${process.env.MAIL_FROM}>`,
+        from: `"No Reply" <${process.env.MAIL_FROM}>`,
       },
       template: {
         dir: join(__dirname, 'templates'),

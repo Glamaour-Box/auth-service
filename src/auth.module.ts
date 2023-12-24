@@ -30,6 +30,13 @@ import { UsersService } from './users/users.service';
     MailModule,
   ],
   controllers: [AuthController, OtpController],
-  providers: [AuthService, PrismaService, JWTStrategy, GoogleStrategy, OtpService, UsersService],
+  providers: [
+    AuthService,
+    PrismaService,
+    JWTStrategy,
+    GoogleStrategy,
+    OtpService,
+    UsersService,
+  ],
 })
 export class AuthServiceModule {}
