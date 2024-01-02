@@ -1,5 +1,5 @@
 # Start with a Node.js base image that uses Node v13
-FROM node:20-alpine
+FROM node:20
 WORKDIR /usr/src
 
 # Copy the package.json file to the container and install fresh node_modules
