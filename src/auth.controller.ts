@@ -11,6 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { AuthService } from './auth.service';
 import { CreateUser, GoogleAuthRequest, SigninUser } from './types';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('auth')
 // @UseInterceptors(CacheInterceptor)
@@ -23,7 +24,7 @@ export class AuthController {
   }
 
   @Post('/signup')
-  async signup(@Body() input: CreateUser) {
+  async signup(@Body() input: CreateUserDto) {
     return await this.authService.signup(input);
   }
 

@@ -1,5 +1,5 @@
 # Start with a Node.js base image that uses Node v13
-FROM node:20
+FROM node:20-alpine
 WORKDIR /usr/src
 
 # Copy the package.json file to the container and install fresh node_modules
@@ -22,5 +22,9 @@ RUN rm -r src
 # Environement variables
 ENV NODE_ENV=production
 
+ENV GATEWAY_BASE_URL="https://clientservice-e76nrq5f.b4a.run/"
+
 # Assign `yarn start:prod` as the default command to run when booting the container
 CMD ["yarn", "start:prod"]
+
+EXPOSE 8079

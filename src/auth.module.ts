@@ -11,6 +11,7 @@ import { GoogleStrategy } from './google-strategy';
 import { MailModule } from './mail/mail.module';
 import { OtpService } from './otp/otp.service';
 import { OtpController } from './otp/otp.controller';
+import { MyAxios } from './utils/axios.config';
 
 @Module({
   imports: [
@@ -29,6 +30,13 @@ import { OtpController } from './otp/otp.controller';
     MailModule,
   ],
   controllers: [AuthController, OtpController],
-  providers: [AuthService, PrismaService, JWTStrategy, GoogleStrategy, OtpService],
+  providers: [
+    AuthService,
+    PrismaService,
+    JWTStrategy,
+    GoogleStrategy,
+    OtpService,
+    MyAxios,
+  ],
 })
 export class AuthServiceModule {}

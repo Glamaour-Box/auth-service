@@ -6,43 +6,47 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
-
 import { CreateUser, SigninUser, GoogleAuthRequest } from 'src/types';
+import { z } from 'zod';
+import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 
 import { PrismaService } from 'src/utils/prisma.service';
 import {
   signinSchema,
   signupSchema,
 } from 'src/validation-schemas/signup.validation';
-import { z } from 'zod';
 import { transformZodErrors } from './utils/transformZodErrors';
-import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
-import { MailService } from './mail/mail.service';
 import { OtpService } from './otp/otp.service';
+import axios from 'axios';
+import { MyAxios } from './utils/axios.config';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private mailService: MailService,
     private otpService: OtpService,
+    private myAxios: MyAxios,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 15);
   }
 
-  async signup(data: CreateUser): Promise<Omit<User, 'password'>> {
-    const { email, password, ..._ } = signupSchema.parse(data);
+  async signup(data: CreateUserDto): Promise<Omit<User, 'password'>> {
+    const { email, password, phone, ..._ } = data;
 
     try {
-      const foundUser = await this.prisma.user.findUnique({ where: { email } });
+      const foundUser = await this.prisma.user.findMany({
+        where: { OR: [{ email }, { phone }] },
+      });
 
-      if (foundUser)
-        throw new ConflictException('email has already been registered');
+      if (foundUser.length > 0)
+        throw new ConflictException(
+          'email or phone has already been registered',
+        );
     } catch (error) {
       throw new HttpException(error.message, error.status);
     }
@@ -52,7 +56,11 @@ export class AuthService {
       const encryptedPassword = await this.hashPassword(password);
 
       const createdUser = await this.prisma.user.create({
-        data: { ...data, password: encryptedPassword },
+        data: {
+          ...data,
+          services: data.services,
+          password: encryptedPassword,
+        },
       });
 
       delete createdUser.password;
@@ -64,10 +72,11 @@ export class AuthService {
 
       return createdUser;
     } catch (error) {
+      console.log('ERROR => ', error);
       if (error instanceof z.ZodError) {
         throw new BadRequestException(transformZodErrors(error.errors));
       } else {
-        throw new HttpException(error.message, error.status);
+        throw new HttpException(error.message, error.statusCode || 500);
       }
     }
   }
@@ -142,7 +151,7 @@ export class AuthService {
 
   async googleLogin(
     req: GoogleAuthRequest,
-  ): Promise<User & { token?: string }> {
+  ): Promise<Omit<User, 'password'> & { token?: string }> {
     if (!req.user) throw new UnauthorizedException('no user from google');
 
     try {
@@ -156,8 +165,8 @@ export class AuthService {
           data: {
             email: req.user.email,
             name: req.user.name,
-            role: 'vendor',
-            o_auth: true,
+            role: 'VENDOR',
+            oAuth: true,
           },
         });
 

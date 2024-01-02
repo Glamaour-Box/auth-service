@@ -87,12 +87,12 @@ export type ServiceResponse<T = any> = SuccessResponse<T>;
 
 //
 
-export type Roles = 'user' | 'admin' | 'vendor';
-export type Service =
-  | 'vendor_dashboard'
-  | 'ecommerce'
-  | 'fintech'
-  | 'logistics';
+export type Roles = 'USER' | 'ADMIN' | 'VENDOR';
+export type Services =
+  | 'VENDOR_DASHBOARD'
+  | 'ECOMMERCE'
+  | 'FINTECH'
+  | 'LOGISTICS';
 
 export interface User {
   email: string;
@@ -102,14 +102,14 @@ export interface User {
   role?: Roles;
   emailVerified: boolean;
 
-  service: Service; //service the user registered on
+  services: Services[]; //service the user registered on
 
   store?: string;
 }
 
 export type CreateUser = Pick<
   User,
-  'email' | 'password' | 'role' | 'service' | 'phone' | 'name'
+  'email' | 'password' | 'role' | 'services' | 'phone' | 'name'
 >;
 
 export type SigninUser = Pick<User, 'email' | 'password'>;

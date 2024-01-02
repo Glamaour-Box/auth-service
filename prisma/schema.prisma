@@ -10,29 +10,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator dto {
+  provider                        = "prisma-generator-nestjs-dto"
+  output                          = "../src/dto/"
+  outputToNestJsResourceStructure = "false"
+  classValidation                 = "true"
+}
+
 model User {
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   email          String    @unique
   name           String
   password       String? // should be null if o_auth is true, can be added later
-  phone          String? // should be null if o_auth is true, can be added later
-  role           user_role @default(user)
-  email_verified Boolean   @default(false)
-  service        service?
-  o_auth         Boolean   @default(false)
-  //for vendors
-  store          String? // will be the store ID to the store in the ecommerce service DB
+  phone          String?   @unique // should be null if o_auth is true, can be added later
+  /// @DtoCreateOptional
+  role           UserRole  @default(USER)
+  /// @DtoCreateOptional
+  emailVerified  Boolean   @default(false)
+  services       Service[] //platorms they are registered to
+  /// @DtoCreateOptional
+  oAuth          Boolean   @default(false)
+  /// @DtoCreateOptional
+  isProfileSetup Boolean   @default(false)
 }
 
-enum user_role {
-  vendor @map("vendor")
-  user   @map("user")
-  admin  @map("admin")
+enum UserRole {
+  VENDOR
+  USER
+  ADMIN
+  CUSTOMER
 }
 
-enum service {
-  vendor_dashboard @map("vendor_dashboard")
-  ecommerce        @map("ecommerce")
-  fintech          @map("fintech")
-  logistics        @map("logistics")
+enum Service {
+  VENDOR_DASHBOARD
+  ECOMMERCE
+  FINTECH
+  LOGISTICS
 }

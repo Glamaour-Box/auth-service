@@ -16,7 +16,7 @@ export const signupSchema = z.object({
     },
     { message: validationErrorMessages.invalidPhone },
   ),
-  service: z.enum([
+  services: z.enum([
     GLAMBOX_SERVICES.ECOMMERCE,
     GLAMBOX_SERVICES.FINTECH,
     GLAMBOX_SERVICES.LOGISTICS,
