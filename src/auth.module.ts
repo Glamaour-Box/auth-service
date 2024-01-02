@@ -12,6 +12,7 @@ import { MailModule } from './mail/mail.module';
 import { OtpService } from './otp/otp.service';
 import { OtpController } from './otp/otp.controller';
 import { MyAxios } from './utils/axios.config';
+import { UsersService } from './users/users.service';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MyAxios } from './utils/axios.config';
     JWTStrategy,
     GoogleStrategy,
     OtpService,
+    UsersService,
     MyAxios,
   ],
 })

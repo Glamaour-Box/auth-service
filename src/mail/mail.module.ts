@@ -11,7 +11,7 @@ import { join } from 'path';
       // or
       transport: {
         host: process.env.SMTP_HOST,
-        secure: false,
+        secure: true,
         auth: {
           user: process.env.SMTP_EMAIL,
           pass: process.env.SMTP_EMAIL_PASSWORD,
@@ -19,7 +19,7 @@ import { join } from 'path';
         port: Number(process.env.SMTP_PORT),
       },
       defaults: {
-        from: '"No Reply" <noreply@glamourbox.com>',
+        from: `"No Reply" <${process.env.MAIL_FROM}>`,
       },
       template: {
         dir: join(__dirname, 'templates'),

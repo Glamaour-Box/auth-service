@@ -12,13 +12,9 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 
 import { PrismaService } from 'src/utils/prisma.service';
-import {
-  signinSchema,
-  signupSchema,
-} from 'src/validation-schemas/signup.validation';
+import { signinSchema } from 'src/validation-schemas/signup.validation';
 import { transformZodErrors } from './utils/transformZodErrors';
 import { OtpService } from './otp/otp.service';
-import axios from 'axios';
 import { MyAxios } from './utils/axios.config';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -48,7 +44,10 @@ export class AuthService {
           'email or phone has already been registered',
         );
     } catch (error) {
-      throw new HttpException(error.message, error.status);
+      throw new HttpException(
+        error.message,
+        error.status || error.statusCode || 500,
+      );
     }
 
     try {
@@ -66,7 +65,7 @@ export class AuthService {
       delete createdUser.password;
 
       // send OTP to phone or email
-      this.otpService.sendOtp(createdUser.email);
+      this.otpService.sendMailOtp(createdUser.email);
       // make actions based on user role = vendor, user, etc
       // create a store if user role = vendor
 
