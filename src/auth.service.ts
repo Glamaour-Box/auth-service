@@ -32,7 +32,7 @@ export class AuthService {
   }
 
   async signup(data: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const { email, password, phone, ..._ } = data;
+    const { email, password, phone, services, ..._ } = data;
 
     try {
       const foundUser = await this.prisma.user.findMany({
@@ -43,21 +43,14 @@ export class AuthService {
         throw new ConflictException(
           'email or phone has already been registered',
         );
-    } catch (error) {
-      throw new HttpException(
-        error.message,
-        error.status || error.statusCode || 500,
-      );
-    }
 
-    try {
       // encrypt password
       const encryptedPassword = await this.hashPassword(password);
 
       const createdUser = await this.prisma.user.create({
         data: {
           ...data,
-          services: data.services,
+          services,
           password: encryptedPassword,
         },
       });

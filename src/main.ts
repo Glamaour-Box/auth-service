@@ -7,9 +7,11 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const port = process.env.PORT || 8079;
-  const host = process.env.HOST || 'localhost';
 
   const app = await NestFactory.create(AuthServiceModule);
+  app.enableCors({
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
+  });
   app.useGlobalPipes(new ValidationPipe());
   app.use(compression());
 

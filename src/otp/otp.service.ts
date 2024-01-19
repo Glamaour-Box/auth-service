@@ -32,7 +32,7 @@ export class OtpService {
   async verifyMailOtp(email: string, input: string): Promise<boolean> {
     const cacheKey = `mailOtp:${email}`;
     try {
-      const value = await this.cacheManager.get(`mailOtp:${email}`);
+      const value = await this.cacheManager.get(cacheKey);
 
       if (!value || value != input)
         throw new BadRequestException('otp doesnt match');
